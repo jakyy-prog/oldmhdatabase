@@ -5,19 +5,26 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-const db = new sqlite3.Database("./database/quest/mhp3rd/guild_p3.db");
+const databases = {
+  mhp3rd: new sqlite3.Database("./database/quest/mhp3rd/mhp3rd.db"),
+  mhfu: new sqlite3.Database("./database/quest/mhfu/mhfu.db"),
+};
 
 app.get("/quest/:game/:type/:stars", (req, res) => {
   const { game, type, stars } = req.params;
+
+  const db = databases[game];
+  if (!db) {
+    res.status(404).json({ error: "Game tidak ditemukan" });
+    return;
+  }
 
   if (type !== "village" && type !== "guild") {
     res.status(400).json({ error: "Type harus 'village' atau 'guild'" });
     return;
   }
 
-  const table = type;
-
-  db.all(`SELECT * FROM ${table} WHERE stars = ?`, [stars], (err, rows) => {
+  db.all(`SELECT * FROM ${type} WHERE stars = ?`, [stars], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
