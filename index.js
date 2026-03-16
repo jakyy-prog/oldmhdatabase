@@ -1,6 +1,8 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -31,6 +33,24 @@ app.get("/quest/:game/:type/:stars", (req, res) => {
     }
     res.json(rows);
   });
+});
+
+app.get("/files", (req, res) => {
+  function listFiles(dir) {
+    const result = {};
+    const items = fs.readdirSync(dir);
+    items.forEach((item) => {
+      const full = path.join(dir, item);
+      if (fs.statSync(full).isDirectory()) {
+        result[item] = listFiles(full);
+      } else {
+        result[item] = "file";
+      }
+    });
+    return result;
+  }
+
+  res.json(listFiles(path.join(__dirname, "database")));
 });
 
 const PORT = process.env.PORT || 3000;
